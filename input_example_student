@@ -1,4 +1,3 @@
-% Physique :
 cb_gauche=libre ! fixe, libre, sortie, excitation
 cb_droite=fixe  ! fixe, libre, sortie, excitation
 v_uniform = true
