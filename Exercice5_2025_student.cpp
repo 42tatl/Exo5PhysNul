@@ -12,8 +12,12 @@ using namespace std;
 
 
 double energy(const std::vector<double>& fnow, double dx) {
-  double ener = 0.0; // TODO: compute quantity E 
-    return 0.0;
+  double ener = 0.0;
+    for(size_t i = 0; i < fnow.size(); ++i){
+        ener += fnow[i] * fnow[i];
+    }
+    ener *= dx;
+    return ener;
 }
 
 
@@ -25,11 +29,11 @@ void boundary_condition(vector<double> &fnext, vector<double> &fnow, double cons
         fnext[0] = 0.0; 
 	// NB: on peut aussi utiliser la condition "excitation" et poser A=0
       }else if(bc_l == "libre"){
-        fnext[0] = 0.0; // TODO : Modifier pour imposer la condition au bord gauche libre
+        fnext[0] = fnext[1]; // TODO : Modifier pour imposer la condition au bord gauche libre
       }else if (bc_l =="sortie"){
-        fnext[0] = 0.0; // TODO : Modifier pour imposer la condition au bord gauche "sortie de l'onde"
+        fnext[0] = fnow[0] + sqrt(beta2[0]) * (fnow[1] - fnow[0]); // TODO : Modifier pour imposer la condition au bord gauche "sortie de l'onde"
       }else if (bc_l == "excitation"){
-        fnext[0] = 0.0; // TODO : Modifier pour imposer la condition au bord gauche sinusoidale
+        fnext[0] = A * sin(om * t); // TODO : Modifier pour imposer la condition au bord gauche sinusoidale
       }else{
         cerr << "Merci de choisir une condition aux bord gauche valide" << endl;
       }
@@ -38,11 +42,11 @@ void boundary_condition(vector<double> &fnext, vector<double> &fnow, double cons
         fnext[N-1] = 0.0; 
 	// NB: on peut aussi utiliser la condition "excitation" et poser A=0	
       }else if(bc_r == "libre"){
-        fnext[N-1] = 0.0; // TODO : Modifier pour imposer la condition au bord droit libre
+        fnext[N-1] = fnext[N-2]; // TODO : Modifier pour imposer la condition au bord droit libre
       }else if (bc_r =="sortie"){
-        fnext[N-1] = 0.0; // TODO : Modifier pour imposer la condition au bord droit "sortie de l'onde"
+        fnext[N-1] = fnow[N-1] + sqrt(beta2[N-1]) * (fnow[N-2] - fnow[N-1]); // TODO : Modifier pour imposer la condition au bord droit "sortie de l'onde"
       }else if (bc_l == "excitation"){ 
-        fnext[N-1] = 0.0; // TODO : Modifier pour imposer la condition au bord droit sinusoidale
+        fnext[N-1] = A * sin(om * t); // TODO : Modifier pour imposer la condition au bord droit sinusoidale
       }else{
         cerr << "Merci de choisir une condition aux bord droit valide" << endl;
       }
