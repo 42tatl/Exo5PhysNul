@@ -31,7 +31,7 @@ void boundary_condition(vector<double> &fnext, vector<double> &fnow, double cons
       }else if(bc_l == "libre"){
         fnext[0] = fnext[1]; // TODO : Modifier pour imposer la condition au bord gauche libre
       }else if (bc_l =="sortie"){
-        fnext[0] = fnow[0] + sqrt(beta2[0]) * (fnow[1] - fnow[0]); // TODO : Modifier pour imposer la condition au bord gauche "sortie de l'onde"
+        fnext[0] = fnow[0] - sqrt(beta2[0]) * (fnow[1] - fnow[0]); // TODO : Modifier pour imposer la condition au bord gauche "sortie de l'onde"
       }else if (bc_l == "excitation"){
         fnext[0] = A * sin(om * t); // TODO : Modifier pour imposer la condition au bord gauche sinusoidale
       }else{
@@ -44,7 +44,7 @@ void boundary_condition(vector<double> &fnext, vector<double> &fnow, double cons
       }else if(bc_r == "libre"){
         fnext[N-1] = fnext[N-2]; // TODO : Modifier pour imposer la condition au bord droit libre
       }else if (bc_r =="sortie"){
-        fnext[N-1] = fnow[N-1] + sqrt(beta2[N-1]) * (fnow[N-2] - fnow[N-1]); // TODO : Modifier pour imposer la condition au bord droit "sortie de l'onde"
+        fnext[N-1] = fnow[N-1] - sqrt(beta2[N-1]) * (fnow[N-2] - fnow[N-1]); // TODO : Modifier pour imposer la condition au bord droit "sortie de l'onde"
       }else if (bc_l == "excitation"){ 
         fnext[N-1] = A * sin(om * t); // TODO : Modifier pour imposer la condition au bord droit sinusoidale
       }else{
@@ -59,10 +59,19 @@ double finit(double x, double n_init, double L, double f_hat, double x1, double 
 
 if(initialization=="mode"){
   // TODO: initialiser la fonction f(x,t=0) selon un mode propre
-  finit_ = 0.0;
+  finit_ = cos((n_init+0.5)*PI*x/L); //fois une constante inconnue hihihihihi
 }
 else{
   // TODO: initialiser la fonction f(x,t=0) selon la donnée du problème
+  if (x<= x1){
+    finit_ = 0.0;
+  }
+  else if (x > x1 && x < x2){
+    finit_ = f_hat * (1-cos(2*PI*(x-x1)/(x2-x1)));
+  }
+  else if (x >= x2 && x <= L){
+    finit_ = 0.0;
+  }
   finit_ =0.0;
 }
   return finit_;
@@ -199,18 +208,18 @@ int main(int argc, char* argv[])
   {
     fpast[i] = 0.;
     fnow[i]  = 0.;
-    beta2[i] = 1.0; // TODO: Modifier pour calculer beta^2 aux points de maillage
+    beta2[i] = sqrt(vel2[i])*dt/dx; // TODO: Modifier pour calculer beta^2 aux points de maillage
 
     fnow[i]  = finit(x[i], n_init,  L, f_hat, x1, x2, initialization);
 
     if(initial_state =="static"){
-      fpast[i] = 0.0; // TODO: system is at rest for t<=0, 
+      fpast[i] = fnow[i]; // TODO: system is at rest for t<=0,
     }
     else if(initial_state =="right"){ 
-      fpast[i] = 0.0; // TODO: propagation to the right
+      fpast[i] = finit(x[i] + sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); // TODO: propagation to the right
     }
     else if(initial_state =="left"){
-      fpast[i] = 0.0; // TODO: propagation to the left
+      fpast[i] = finit(x[i] + sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); // TODO: propagation to the left
     }
   }
 
