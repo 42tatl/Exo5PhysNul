@@ -14,9 +14,9 @@ using namespace std;
 double energy(const std::vector<double>& fnow, double dx) {
   double ener = 0.0;
     for(size_t i = 0; i < fnow.size(); ++i){
-        ener += fnow[i] * fnow[i];
+        ener += 0.5 * dx *(fnow[i] * fnow[i] + fnow[i-1] * fnow[i-1]);
     }
-    ener *= dx;
+   
     return ener;
 }
 
@@ -29,11 +29,11 @@ void boundary_condition(vector<double> &fnext, vector<double> &fnow, double cons
         fnext[0] = 0.0; 
 	// NB: on peut aussi utiliser la condition "excitation" et poser A=0
       }else if(bc_l == "libre"){
-        fnext[0] = fnext[1]; // TODO : Modifier pour imposer la condition au bord gauche libre
+        fnext[0] = fnext[1]; 
       }else if (bc_l =="sortie"){
-        fnext[0] = fnow[0] - sqrt(beta2[0]) * (fnow[1] - fnow[0]); // TODO : Modifier pour imposer la condition au bord gauche "sortie de l'onde"
+        fnext[0] = fnow[0] - sqrt(beta2[0]) * (fnow[1] - fnow[0]); 
       }else if (bc_l == "excitation"){
-        fnext[0] = A * sin(om * t); // TODO : Modifier pour imposer la condition au bord gauche sinusoidale
+        fnext[0] = A * sin(om * t); 
       }else{
         cerr << "Merci de choisir une condition aux bord gauche valide" << endl;
       }
@@ -42,11 +42,11 @@ void boundary_condition(vector<double> &fnext, vector<double> &fnow, double cons
         fnext[N-1] = 0.0; 
 	// NB: on peut aussi utiliser la condition "excitation" et poser A=0	
       }else if(bc_r == "libre"){
-        fnext[N-1] = fnext[N-2]; // TODO : Modifier pour imposer la condition au bord droit libre
+        fnext[N-1] = fnext[N-2]; 
       }else if (bc_r =="sortie"){
-        fnext[N-1] = fnow[N-1] - sqrt(beta2[N-1]) * (fnow[N-2] - fnow[N-1]); // TODO : Modifier pour imposer la condition au bord droit "sortie de l'onde"
-      }else if (bc_l == "excitation"){ 
-        fnext[N-1] = A * sin(om * t); // TODO : Modifier pour imposer la condition au bord droit sinusoidale
+        fnext[N-1] = fnow[N-1] - sqrt(beta2[N-1]) * (fnow[N-1] - fnow[N-2]); 
+      }else if (bc_r == "excitation"){ 
+        fnext[N-1] = A * sin(om * t); 
       }else{
         cerr << "Merci de choisir une condition aux bord droit valide" << endl;
       }
@@ -58,21 +58,23 @@ double finit(double x, double n_init, double L, double f_hat, double x1, double 
   const double PI = 3.1415926535897932384626433832795028841971e0;
 
 if(initialization=="mode"){
-  // TODO: initialiser la fonction f(x,t=0) selon un mode propre
+  
   finit_ = cos((n_init+0.5)*PI*x/L); //fois une constante inconnue hihihihihi
 }
 else{
-  // TODO: initialiser la fonction f(x,t=0) selon la donnée du problème
+  
   if (x<= x1){
     finit_ = 0.0;
   }
   else if (x > x1 && x < x2){
-    finit_ = f_hat * (1-cos(2*PI*(x-x1)/(x2-x1)));
+    finit_ = 0.5 * f_hat * (1-cos(2*PI*(x-x1)/(x2-x1)));
   }
   else if (x >= x2 && x <= L){
     finit_ = 0.0;
   }
-  finit_ =0.0;
+  else{
+    throw std::out_of_range("x is out of range");
+  }
 }
   return finit_;
 }
@@ -171,19 +173,26 @@ int main(int argc, char* argv[])
         h0[i]  = h00;
      } 
      else {
-       // TODO: programmer la fonction h(x) selon la donnée
-       h0[i]  = 999.999; // MODIFIER
+      double xi = x[i];
+      if (x1 <=xi && xi<= xa) {
+          h0[i] = hL;
+      } else if (xb <=xi && xi <= x2) {
+          h0[i] = hR;
+      } else if (xa < xi && xi < xb) {
+          h0[i] = 0.5 * (hL + hR) + 0.5 * (hL - hR) * cos(PI * (xi - xa) / (xb - xa));
+      }
      }
      vel2[i]  = g* h0[i];
   }
   // maiximal value of u^2 (to be used to set dt)
   auto max_vel2 = std::max_element(vel2.begin(), vel2.end());
+  double max_vel2_double = *max_vel2;
   // TODO: set dt for given CFL
-  dt = 1.0; // MODIFY
-  // TODO: define dt and CFL with given nsteps
+  dt = CFL * dx / sqrt(max_vel2_double); 
+ 
   if(impose_nsteps){
-    dt  = 1.0; // MODIFY
-    CFL = 1.0; // MODIFY
+    dt  = tfin / nsteps; // MODIFY
+    CFL = sqrt(max_vel2_double) * dt / dx; 
   }
 
   // Fichiers de sortie :
@@ -208,18 +217,18 @@ int main(int argc, char* argv[])
   {
     fpast[i] = 0.;
     fnow[i]  = 0.;
-    beta2[i] = sqrt(vel2[i])*dt/dx; // TODO: Modifier pour calculer beta^2 aux points de maillage
+    beta2[i] =vel2[i]*(dt*dt)/(dx*dx); 
 
     fnow[i]  = finit(x[i], n_init,  L, f_hat, x1, x2, initialization);
 
     if(initial_state =="static"){
-      fpast[i] = fnow[i]; // TODO: system is at rest for t<=0,
+      fpast[i] = fnow[i]; 
     }
     else if(initial_state =="right"){ 
-      fpast[i] = finit(x[i] + sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); // TODO: propagation to the right
+      fpast[i] = finit(x[i] + sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); 
     }
     else if(initial_state =="left"){
-      fpast[i] = finit(x[i] + sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); // TODO: propagation to the left
+      fpast[i] = finit(x[i] - sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); 
     }
   }
 
@@ -240,10 +249,51 @@ int main(int argc, char* argv[])
     ++stride;
 
     // Evolution :
+
+    /* jsp si c'est juste a tester 
     for(int i(1); i<N-1; ++i)
     {
-      fnext[i] = 0.0; // TODO : Schémas pour les 3 cas, Equation A ou B ou C
+      if (equation_type == "A") { // Equation A
+        fnext[i] = 2 * (1 - beta2[i]) * fnow[i] + beta2[i] * (fnow[i+1] + fnow[i-1])- fpast[i];
+                 
     }
+    else if (equation_type == "B") { // Equation B
+        fnext[i] = 2 * fnow[i] - fpast[i] + (beta2[i+1] * (fnow[i+1] - fnow[i])  -  beta2[i]   * (fnow[i]   - fnow[i-1]));
+                 
+                
+    }
+    else if (equation_type == "C") { // Equation C
+        fnext[i] = 2 * fnow[i] - fpast[i] + (beta2[i+1] * fnow[i+1]   - 2 * beta2[i] * fnow[i]  + beta2[i-1] * fnow[i-1]);
+                 
+               
+                
+    }
+    else {
+        cerr << "Type d'équation inconnu : " << equation_type << endl;
+    }
+    }
+  */
+
+  // Evolution :
+
+    for(int i(1); i<N-1; ++i) //ici je suis VRAIMENT PAS SURE a verifier!!!!!!!!!
+    { 
+        if(equation_type=="A"){
+          fnext[i] = 2 * (1 - beta2[i]) * fnow[i] + beta2[i] * (fnow[i+1] + fnow[i-1])- fpast[i];
+        }
+        if(equation_type=="B"){
+           fnext[i]= 0.25*(beta2[i+1]-beta2[i-1])*(fnow[i+1]-fnow[i-1]) + beta2[i]*(fnow[i+1]-2*fnow[i]+fnow[i-1]) +2*fnow[i]-fpast[i]; 
+        }
+        if(equation_type=="C"){
+            fnext[i]= beta2[i+1]*fnow[i+1]-2*beta2[i]*fnow[i]+beta2[i-1]*fnow[i-1] + 2*fnow[i] - fpast[i];
+        }
+        else{
+            cerr << "Merci de choisir une equation valide" << endl;
+        }
+    
+    }
+  
+  
 
     // Impose boundary conditions
     boundary_condition(fnext, fnow, A, om, t, dt, beta2, bc_l, bc_r, N);
