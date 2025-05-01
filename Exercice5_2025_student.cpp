@@ -248,9 +248,7 @@ int main(int argc, char* argv[])
      }
     ++stride;
 
-    // Evolution :
-
-    /* jsp si c'est juste a tester 
+    // Evolution : je ne suis pas sure pour la B
     for(int i(1); i<N-1; ++i)
     {
       if (equation_type == "A") { // Equation A
@@ -259,6 +257,7 @@ int main(int argc, char* argv[])
     }
     else if (equation_type == "B") { // Equation B
         fnext[i] = 2 * fnow[i] - fpast[i] + (beta2[i+1] * (fnow[i+1] - fnow[i])  -  beta2[i]   * (fnow[i]   - fnow[i-1]));
+        //fnext[i]= 0.25*(beta2[i+1]-beta2[i-1])*(fnow[i+1]-fnow[i-1]) + beta2[i]*(fnow[i+1]-2*fnow[i]+fnow[i-1]) +2*fnow[i]-fpast[i]; ou celle ci jsp???
                  
                 
     }
@@ -272,26 +271,11 @@ int main(int argc, char* argv[])
         cerr << "Type d'équation inconnu : " << equation_type << endl;
     }
     }
-  */
+  
 
-  // Evolution :
 
-    for(int i(1); i<N-1; ++i) //ici je suis VRAIMENT PAS SURE a verifier!!!!!!!!!
-    { 
-        if(equation_type=="A"){
-          fnext[i] = 2 * (1 - beta2[i]) * fnow[i] + beta2[i] * (fnow[i+1] + fnow[i-1])- fpast[i];
-        }
-        if(equation_type=="B"){
-           fnext[i]= 0.25*(beta2[i+1]-beta2[i-1])*(fnow[i+1]-fnow[i-1]) + beta2[i]*(fnow[i+1]-2*fnow[i]+fnow[i-1]) +2*fnow[i]-fpast[i]; 
-        }
-        if(equation_type=="C"){
-            fnext[i]= beta2[i+1]*fnow[i+1]-2*beta2[i]*fnow[i]+beta2[i-1]*fnow[i-1] + 2*fnow[i] - fpast[i];
-        }
-        else{
-            cerr << "Merci de choisir une equation valide" << endl;
-        }
-    
-    }
+
+   
   
   
 
