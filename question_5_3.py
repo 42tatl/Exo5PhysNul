@@ -19,7 +19,9 @@ params = fct.read_in_file(input_filename)
  output, n_stride, ecrire_f,
  hL, hR, h00, xa, xb, L, om) = fct.get_wave_params(params)
 
-cases = ["left", "right", "static"]
+#cases = ["left", "right", "static"]
+cases = ["right"]
+
 os.makedirs("outputs", exist_ok=True)
 
 # Run simulations

@@ -11,7 +11,7 @@ tfin=1.0
 equation_type=A
 nx=64
 n_init=3 
-initialization=mode 
+initialization=finit 
 initial_state=static
 
 CFL=1.0

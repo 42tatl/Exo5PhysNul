@@ -52,32 +52,33 @@ void boundary_condition(vector<double> &fnext, vector<double> &fnow, double cons
       }
 }
 
-double finit(double x, double n_init, double L, double f_hat, double x1, double x2, string initialization)
+double finit(double x, double n_init, double L, double f_hat, double x1, double x2, std::string initialization)
 {
-  double finit_(0.);
-  const double PI = 3.1415926535897932384626433832795028841971e0;
+    const double PI = 3.14159265358979323846;
+    double finit_ = 0.0;
 
-if(initialization=="mode"){
-  
-  finit_ = cos((n_init+0.5)*PI*x/L); //fois une constante inconnue hihihihihi
+    // Empêche les valeurs hors du domaine [0, L]
+    if (x < 0.0 || x > L) {
+        return 0.0;
+    }
+
+    if (initialization == "mode") {
+        // Mode propre : cosinus avec mode n_init
+        finit_ = cos((n_init + 0.5) * PI * x / L);
+    } else {
+        // Forme donnée par l'équation (3)
+        if (x <= x1) {
+            finit_ = 0.0;
+        } else if (x > x1 && x < x2) {
+            finit_ = 0.5 * f_hat * (1.0 - cos(2.0 * PI * (x - x1) / (x2 - x1)));
+        } else { // x >= x2
+            finit_ = 0.0;
+        }
+    }
+
+    return finit_;
 }
-else{
-  
-  if (x<= x1){
-    finit_ = 0.0;
-  }
-  else if (x > x1 && x < x2){
-    finit_ = 0.5 * f_hat * (1-cos(2*PI*(x-x1)/(x2-x1)));
-  }
-  else if (x >= x2 && x <= L){
-    finit_ = 0.0;
-  }
-  else{
-    throw std::out_of_range("x is out of range");
-  }
-}
-  return finit_;
-}
+
 
 //
 // Surcharge de l'operateur pour ecrire les elements d'un tableau
