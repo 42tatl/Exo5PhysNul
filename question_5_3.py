@@ -43,7 +43,7 @@ plt.ylabel('Wave height f(x,t) (m)')
 plt.title('Wave Propagation Results')
 plt.legend()
 plt.grid(True)
-plt.savefig("wave_results.png")
+fct.save_figure("wave_results.png")
 plt.show()
 
 
