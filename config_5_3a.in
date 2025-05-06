@@ -1,13 +1,13 @@
 cb_gauche=fixe 
 cb_droite=libre  
-v_uniform = true
+v_uniform=1
 
 A=0.1
 f_hat = 1.0
 x1=3.0
 x2=8.0
 
-tfin=1.0
+tfin=10.0
 equation_type=A
 nx=64
 n_init=3 
@@ -16,16 +16,16 @@ initial_state=static
 
 CFL=1.0
 nsteps=40
-impose_nsteps = true 
+impose_nsteps=true
 
 output=test.out
 n_stride=1
 ecrire_f=1
 
-hL = 8000.0
-hR = 20.0
-h00= 4.0
-xa= 450e3
-xb= 950e3
-L= 15.0 
+hL=8000.0
+hR=20.0
+h00=4.0
+xa=450e3
+xb=950e3
+L=15.0 
 om=0.1  
