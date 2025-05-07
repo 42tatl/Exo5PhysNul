@@ -26,7 +26,7 @@ void boundary_condition(vector<double> &fnext, vector<double> &fnow, double cons
 		vector<double> &beta2, string &bc_l, string &bc_r, int &N)
 {
       if (bc_l == "fixe"){
-        fnext[0] = 0.0; 
+        fnext[0] = fnow[0]; 
 	// NB: on peut aussi utiliser la condition "excitation" et poser A=0
       }else if(bc_l == "libre"){
         fnext[0] = fnext[1]; 
@@ -39,7 +39,7 @@ void boundary_condition(vector<double> &fnext, vector<double> &fnow, double cons
       }
 	      
       if (bc_r == "fixe"){
-        fnext[N-1] = 0.0; 
+        fnext[N-1] =fnow[N-1]; 
 	// NB: on peut aussi utiliser la condition "excitation" et poser A=0	
       }else if(bc_r == "libre"){
         fnext[N-1] = fnext[N-2]; 
@@ -226,10 +226,10 @@ int main(int argc, char* argv[])
       fpast[i] = fnow[i]; 
     }
     else if(initial_state =="right"){ 
-      fpast[i] = finit(x[i] + sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); 
+      fpast[i] = finit(x[i] - sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); //ou -???
     }
     else if(initial_state =="left"){
-      fpast[i] = finit(x[i] - sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); 
+      fpast[i] = finit(x[i] + sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); //ou +???
     }
   }
 
@@ -249,6 +249,8 @@ int main(int argc, char* argv[])
      }
     ++stride;
 
+
+    /*
     // Evolution : je ne suis pas sure pour la B
     for(int i(1); i<N-1; ++i)
     {
@@ -272,9 +274,25 @@ int main(int argc, char* argv[])
         cerr << "Type d'équation inconnu : " << equation_type << endl;
     }
     }
-  
+  */
 
-
+// Evolution : ABSOLUMENT PAS SURE JSP ATTENTION A TRAITER AVEC DES PINCETTES
+for(int i(1); i<N-1; ++i)
+{
+  fnext[i] = 0.0; // TODO : Schémas pour les 3 cas, Equation A ou B ou C
+  if(equation_type == "A") {
+    fnext[i] = 2*(1-beta2[i])*fnow[i] - fpast[i] + beta2[i]*(fnow[i+1]+ fnow[i-1]);
+}
+else if(equation_type == "B") {
+  fnext[i] = 2*(1-beta2[i])*fnow[i] - fpast[i] + beta2[i]*(fnow[i+1]+ fnow[i-1]) + 0.25*(beta2[i]/vel2[i])*(fnow[i+1]-fnow[i-1])*(vel2[i+1]-vel2[i-1]);
+    }
+else if(equation_type == "C") {
+  fnext[i] = fnow[i]*(2.0-4.0*beta2[i]+beta2[i+1]+beta2[i-1]) - fpast[i] + 0.5*(beta2[i+1]-beta2[i-1])*(fnow[i+1]-fnow[i-1])+beta2[i]*(fnow[i+1]+fnow[i-1]);}
+  else {
+    cerr << "Merci de choisir une equation valide" << endl;
+    exit(1);
+  }
+}
 
    
   

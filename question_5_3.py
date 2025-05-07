@@ -20,7 +20,8 @@ params = fct.read_in_file(input_filename)
  hL, hR, h00, xa, xb, L, om) = fct.get_wave_params(params)
 
 #cases = ["left", "right", "static"]
-cases = ["right"]
+cases = ["left"]
+
 
 os.makedirs("outputs", exist_ok=True)
 
@@ -31,22 +32,26 @@ for case in cases:
     output_name = f"wave_{case}"
     fct.run_simulation(executable, "config_5_3a.in", output_name, **current_params)
 
-# Plot results
-plt.figure(figsize=(10,6))
+
+
+# Affichage spatio-temporel : x en ordonnée, t en abscisse
 for case in cases:
-    # Read files WITHOUT .out extension
     x, t, f, _, _ = fct.read_wave_data(f"outputs/wave_{case}")
     if x is not None:
-        plt.plot(x, f[0,:], label=f"Initial {case}")
-        plt.plot(x, f[-1,:], '--', label=f"Final {case}")
+        plt.figure(figsize=(8, 5))
+        # imshow attend f sous forme (espace, temps), donc f déjà au bon format
+        plt.imshow(f, aspect='auto',
+                   extent=[t[0], t[-1], x[0], x[-1]],
+                   origin='lower', cmap='turbo')
+        plt.colorbar(label=r"$f(x,t)$ [m]")
+        plt.xlabel(r"Time $t$ [s]")
+        plt.ylabel(r"Position $x$ [m]")
+        plt.tight_layout()
+        fct.save_figure(f"wave_{case}_spacetime_x_t.png")
+        plt.show()
 
-plt.xlabel('Position x (m)')
-plt.ylabel('Wave height f(x,t) (m)')
-plt.title('Wave Propagation Results')
-plt.legend()
-plt.grid(True)
-fct.save_figure("wave_results.png")
-plt.show()
+
+#Question b for left initial state
 
 
 
