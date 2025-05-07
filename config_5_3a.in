@@ -9,14 +9,14 @@ x2=8.0
 
 tfin=10.0
 equation_type=A
-nx=64
+nx=100
 n_init=3 
 initialization=finit 
 initial_state=static
 
 CFL=1.0
-nsteps=40
-impose_nsteps=true
+nsteps=1000
+impose_nsteps=0
 
 output=test.out
 n_stride=1

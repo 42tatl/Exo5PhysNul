@@ -156,6 +156,7 @@ int main(int argc, char* argv[])
 // false --> dt tel que beta_CFL=1; attention, t final n'est pas exactement tfin
   bool impose_nsteps    = configFile.get<bool>("impose_nsteps");
 
+
   vector<double> h0(N) ;
   vector<double> vel2(N) ;
   vector<double> x(N) ;

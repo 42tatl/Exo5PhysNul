@@ -90,6 +90,7 @@ def run_simulation(executable, input_filename, output_name, **params):
     
     try:
         result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        print(result.stdout)
         print("Command executed successfully")
         
         # Check for files WITHOUT .out extension
@@ -124,6 +125,7 @@ def read_wave_data(output_base):
         f_data = np.loadtxt(f"{output_base}_f")
         energy = np.loadtxt(f"{output_base}_en")
         
+        '''
         # Process wave height data
         t = []
         f = []
@@ -131,7 +133,9 @@ def read_wave_data(output_base):
             if len(row) == len(x) + 1:  # Time + spatial points
                 t.append(row[0])
                 f.append(row[1:])
-        
+        '''
+        t = f_data[:, 0]
+        f = f_data[:, 1:]       
         return np.array(x), np.array(t), np.array(f), np.array(v), np.array(energy)
         
     except Exception as e:
