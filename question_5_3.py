@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import os
 import functions as fct
 
-#Question a
+#QUESTION A
 executable = './Exe'  # Remove .exe for Mac
 repertoire = r"/Users/lilimouelle/Desktop/PHYSNUM/Exo5PhysNul"  # Modify for correct directory
 output_template = "wave_{direction}.out"
@@ -76,17 +76,17 @@ for case in cases:
         plt.tight_layout()
         fct.save_figure(f"wave_{case}_t_vs_x.png")
         plt.show()
-'''
 
 
 
 
-#Question b for left initial state
+
+#QUESTION B for static initial state
 
 
 # Valeurs de CFL à tester
-beta_values = [0.5, 1.0, 1.0003]  # On ne teste que les valeurs stables
-cases = ["left"]  
+beta_values = [0.5, 1.0, 1.0003]  #For static initial state
+ 
 
 os.makedirs("outputs", exist_ok=True)
 
@@ -123,4 +123,47 @@ plt.show()
 
 
 
+beta = 1.0003
+output_base = f"outputs/wave_beta_{beta}"
 
+# Lecture des données
+x, t, f, _, _ = fct.read_wave_data(output_base)
+
+# Vérification
+if x is None or t is None or f is None:
+    raise RuntimeError(f"Impossible de lire les données pour β = {beta}")
+
+f = np.array(f)
+if f.shape[0] == len(t):  # f est (t, x), on veut (x, t)
+    f_plot = f.T
+else:
+    f_plot = f
+
+
+
+
+# Temps précis à afficher
+target_times = [2.0, 2.5, 3.0]
+colors = ['tab:blue', 'tab:orange', 'tab:green']
+
+# Trouver les indices dans t les plus proches des temps souhaités
+idx_times = [np.abs(t - target).argmin() for target in target_times]
+
+# Plot
+plt.figure(figsize=(10, 6))
+for i, idx in enumerate(idx_times):
+    plt.plot(x, f_plot[:, idx], color=colors[i], label=fr"$t = {t[idx]:.4f}$ s, β = {beta}")
+    
+
+plt.xlabel(r"Position $x$ [m]")
+plt.ylabel(r"$f(x, t)$ [m]")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+
+fct.save_figure("stability_snapshots_beta_1.0003.png")
+plt.show()
+'''
+
+
+#QUESTION C
