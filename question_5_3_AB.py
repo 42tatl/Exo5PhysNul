@@ -19,13 +19,14 @@ params = fct.read_in_file(input_filename)
  output, n_stride, ecrire_f,
  hL, hR, h00, xa, xb, L, om) = fct.get_wave_params(params)
 
-#cases = ["left", "right", "static"]
-cases = ["left"]
+
+cases = ["left", "right", "static"]
+#cases = ["left"]
 
 
 os.makedirs("outputs", exist_ok=True)
 
-'''
+
 # Run simulations
 for case in cases:
     current_params = params.copy()
@@ -45,12 +46,15 @@ for case in cases:
             f_plot = f
 
         plt.figure(figsize=(8, 5))
-        plt.imshow(f_plot, aspect='auto',
-                   extent=[t[0], t[-1], x[0], x[-1]],
-                   origin='lower', cmap='turbo')
-        plt.colorbar(label=r"$f(x,t)$ [m]")
-        plt.xlabel(r"Time $t$ [s]")
-        plt.ylabel(r"Position $x$ [m]")
+        im = plt.imshow(f_plot, aspect='auto',
+                        extent=[t[0], t[-1], x[0], x[-1]],
+                        origin='lower', cmap='turbo')
+        cbar = plt.colorbar(im)
+        cbar.set_label(r"$f(x,t)$ [m]", fontsize=16)
+        plt.xlabel(r"Time $t$ [s]", fontsize=16)
+        plt.ylabel(r"Position $x$ [m]", fontsize=16)
+        plt.xticks(fontsize=12)  
+        plt.yticks(fontsize=12)
         plt.tight_layout()
         fct.save_figure(f"wave_{case}_x_vs_t.png")
         plt.show()
@@ -67,12 +71,15 @@ for case in cases:
         else:
             f_plot = f
         plt.figure(figsize=(8, 5))
-        plt.imshow(f_plot.T, aspect='auto',  # transpose pour avoir t en y
-                   extent=[x[0], x[-1], t[0], t[-1]],
-                   origin='lower', cmap='turbo')
-        plt.colorbar(label=r"$f(x,t)$ [m]")
-        plt.xlabel(r"Position $x$ [m]")
-        plt.ylabel(r"Time $t$ [s]")
+        im = plt.imshow(f_plot.T, aspect='auto',
+                        extent=[x[0], x[-1], t[0], t[-1]],
+                        origin='lower', cmap='turbo')
+        cbar = plt.colorbar(im)
+        cbar.set_label(r"$f(x,t)$ [m]", fontsize=16)
+        plt.xlabel(r"Position $x$ [m]", fontsize=16)
+        plt.ylabel(r"Time $t$ [s]", fontsize=16)
+        plt.xticks(fontsize=12)  
+        plt.yticks(fontsize=12)
         plt.tight_layout()
         fct.save_figure(f"wave_{case}_t_vs_x.png")
         plt.show()
@@ -85,7 +92,7 @@ for case in cases:
 
 
 # Valeurs de CFL à tester
-beta_values = [0.5, 1.0, 1.0003]  #For static initial state
+beta_values = [0.1, 1.0, 1.0003]  #For static initial state
  
 
 os.makedirs("outputs", exist_ok=True)
@@ -98,7 +105,7 @@ for beta in beta_values:
     fct.run_simulation(executable, "config_5_3a.in", output_name, **current_params)
 
 # Visualisation des résultats
-plt.figure(figsize=(12, 8))
+plt.figure()
 
 for beta in beta_values:
     x, t, f, _, _ = fct.read_wave_data(f"outputs/wave_beta_{beta}")
@@ -113,9 +120,11 @@ for beta in beta_values:
         t_idx = len(t) // 2
         plt.plot(x, f_plot[:, t_idx], label=f"β = {beta}")
 
-plt.xlabel(r"Position $x$ [m]")
-plt.ylabel(r"$f(x, t=t_{fin}/2)$ [m]")
-plt.legend()
+plt.xlabel(r"Position $x$ [m]",fontsize=16)
+plt.ylabel(r"$f(x, t=t_{fin}/2)$ [m]",fontsize=16)
+plt.xticks(fontsize=12)  
+plt.yticks(fontsize=12)
+plt.legend(fontsize=14)
 plt.grid(True)
 plt.tight_layout()
 fct.save_figure("stability_limit_beta.png")
@@ -150,20 +159,20 @@ colors = ['tab:blue', 'tab:orange', 'tab:green']
 idx_times = [np.abs(t - target).argmin() for target in target_times]
 
 # Plot
-plt.figure(figsize=(10, 6))
+plt.figure()
 for i, idx in enumerate(idx_times):
-    plt.plot(x, f_plot[:, idx], color=colors[i], label=fr"$t = {t[idx]:.4f}$ s, β = {beta}")
+    plt.plot(x, f_plot[:, idx], color=colors[i], label=fr"$t = {t[idx]:.4f}$ s")
     
-
-plt.xlabel(r"Position $x$ [m]")
-plt.ylabel(r"$f(x, t)$ [m]")
-plt.legend()
+    
+plt.plot([], [], ' ', label=fr"$\beta = {beta}$")
+plt.xlabel(r"Position $x$ [m]",fontsize=16)
+plt.ylabel(r"$f(x, t)$ [m]",fontsize=16)
+plt.xticks(fontsize=12)  
+plt.yticks(fontsize=12)
+plt.legend(fontsize=14)
 plt.grid(True)
 plt.tight_layout()
 
 fct.save_figure("stability_snapshots_beta_1.0003.png")
 plt.show()
-'''
 
-
-#QUESTION C

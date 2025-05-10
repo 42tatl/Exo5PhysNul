@@ -227,10 +227,10 @@ int main(int argc, char* argv[])
       fpast[i] = fnow[i]; 
     }
     else if(initial_state =="right"){ 
-      fpast[i] = finit(x[i] - sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); //ou -???
+      fpast[i] = finit(x[i] - sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); 
     }
     else if(initial_state =="left"){
-      fpast[i] = finit(x[i] + sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); //ou +???
+      fpast[i] = finit(x[i] + sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); 
     }
   }
 

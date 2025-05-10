@@ -1,0 +1,19 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+import functions as fct
+
+executable = './Exe'  # Remove .exe for Mac
+repertoire = r"/Users/lilimouelle/Desktop/PHYSNUM/Exo5PhysNul"  # Modify for correct directory
+output_template = "wave_{direction}.out"
+os.chdir(repertoire)
+
+input_filename = "config_5_3a.in"
+params = fct.read_in_file(input_filename)
+(cb_gauche, cb_droite, v_uniform, 
+ A, f_hat, x1, x2, 
+ tfin, equation_type,
+ nx, n_init, initialization, initial_state,
+ CFL, nsteps, impose_nsteps,
+ output, n_stride, ecrire_f,
+ hL, hR, h00, xa, xb, L, om) = fct.get_wave_params(params)
