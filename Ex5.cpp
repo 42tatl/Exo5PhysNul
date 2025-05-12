@@ -13,7 +13,7 @@ using namespace std;
 
 double energy(const std::vector<double>& fnow, double dx) {
   double ener = 0.0;
-    for(size_t i = 0; i < fnow.size(); ++i){
+    for(size_t i = 1; i < fnow.size(); ++i){
         ener += 0.5 * dx *(fnow[i] * fnow[i] + fnow[i-1] * fnow[i-1]);
     }
    
@@ -31,7 +31,7 @@ void boundary_condition(vector<double> &fnext, vector<double> &fnow, double cons
       }else if(bc_l == "libre"){
         fnext[0] = fnext[1]; 
       }else if (bc_l =="sortie"){
-        fnext[0] = fnow[0] - sqrt(beta2[0]) * (fnow[1] - fnow[0]); 
+        fnext[0] = fnow[0] + sqrt(beta2[0]) * (fnow[1] - fnow[0]); 
       }else if (bc_l == "excitation"){
         fnext[0] = A * sin(om * t); 
       }else{
@@ -164,29 +164,42 @@ int main(int argc, char* argv[])
 
   dx = L / (N-1);
   bool ecrire_f = configFile.get<bool>("ecrire_f"); // Exporter f(x,t) ou non
- // Eq.(1) ou Eq.(2) [ou Eq.(6) (faculattif)]: Eq1, Eq2 ou Eq6
+ // Eq.(1) ou Eq.(2) [ou Eq.(6) (facultatif)]: Eq1, Eq2 ou Eq6
   string equation_type = configFile.get<string>("equation_type");
   
 
-  for(int i(0); i<N; ++i){ 
-     x[i] = i * dx ;
-     h0[i] = 0.0;
-     if(v_uniform){
-        h0[i]  = h00;
-     } 
-     else {
-      double xi = x[i];
-      if (x1 <=xi && xi<= xa) {
-          h0[i] = hL;
-      } else if (xb <=xi && xi <= x2) {
-          h0[i] = hR;
-      } else if (xa < xi && xi < xb) {
-          h0[i] = 0.5 * (hL + hR) + 0.5 * (hL - hR) * cos(PI * (xi - xa) / (xb - xa));
-      }
-     }
-     vel2[i]  = g* h0[i];
-  }
-  // maiximal value of u^2 (to be used to set dt)
+  for(int i(0); i<N; ++i) { 
+    x[i] = i * dx;
+    h0[i] = 0.0;
+    
+    if(v_uniform) {
+        h0[i] = h00;
+    } 
+    else {
+        double xi = x[i];
+        if (0 <= xi && xi <= xa) {
+            h0[i] = hL;
+        } else if (xb <= xi && xi <= L) {
+            h0[i] = hR;
+        } else if (xa < xi && xi < xb) {
+            h0[i] = 0.5 * (hL + hR) + 0.5 * (hL - hR) * cos(PI * (xi - xa) / (xb - xa));
+        }
+    }
+    
+    vel2[i] = g * h0[i];
+    
+    // Debug checks for each point
+    if (h0[i] <= 0.0 || std::isnan(h0[i])) {
+        std::cerr << "ERROR: Invalid h0 at x=" << x[i] << ", h0 = " << h0[i] << std::endl;
+        exit(1);
+    }
+    if (std::isnan(vel2[i]) || std::isinf(vel2[i])) {
+        std::cerr << "ERROR: Invalid vel2 at x=" << x[i] 
+                  << " (h0=" << h0[i] << " vel2=" << vel2[i] << ")" << std::endl;
+        exit(1);
+    }
+}
+  // maximal value of u^2 (to be used to set dt)
   auto max_vel2 = std::max_element(vel2.begin(), vel2.end());
   double max_vel2_double = *max_vel2;
   // TODO: set dt for given CFL
@@ -195,8 +208,24 @@ int main(int argc, char* argv[])
   if(impose_nsteps){
     dt  = tfin / nsteps; // MODIFY
     CFL = sqrt(max_vel2_double) * dt / dx; 
+    cout << "Debug: impose_nsteps enabled. Actual CFL = " << CFL << endl;
+    if (CFL > 1.0) {
+        cerr << "ERROR: impose_nsteps leads to unstable CFL = " << CFL 
+             << ". Increase nsteps or reduce tfin." << endl;
+        exit(1);  // Halt if unstable
+    }
   }
+  
+double actual_CFL = sqrt(max_vel2_double) * dt / dx;
+cout << "Debug: Actual CFL = " << actual_CFL << endl;
 
+// Check stability
+if (actual_CFL > 1.0) {
+    cerr << "WARNING: Unstable CFL = " << actual_CFL 
+         << " (CFL > 1). Reduce dt or increase dx." << endl;
+    // Optionally exit or adjust dt dynamically:
+    // dt = 0.9 * dx / sqrt(max_vel2_double);  // Force CFL = 0.9
+}
   // Fichiers de sortie :
   string output = configFile.get<string>("output");
 
@@ -227,17 +256,16 @@ int main(int argc, char* argv[])
       fpast[i] = fnow[i]; 
     }
     else if(initial_state =="right"){ 
-      fpast[i] = finit(x[i] - sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); //ou -???
+      fpast[i] = finit(x[i] - sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); 
     }
     else if(initial_state =="left"){
-      fpast[i] = finit(x[i] + sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); //ou +???
+      fpast[i] = finit(x[i] + sqrt(vel2[i])*dt, n_init, L, f_hat, x1, x2, initialization); 
     }
   }
 
 
   cout<<"beta2[0] is "<<beta2[0]<<endl;
   cout<<"dt is "<< dt <<endl;
-
 
   // Boucle temporelle :
   for(t=0.; t<tfin-.5*dt; t+=dt)
@@ -250,62 +278,56 @@ int main(int argc, char* argv[])
      }
     ++stride;
 
+  for (int i = 1; i < N - 1; ++i) {
+    fnext[i] = 0.0;  // Initialize to zero before applying the scheme
 
-    /*
-    // Evolution : je ne suis pas sure pour la B
-    for(int i(1); i<N-1; ++i)
-    {
-      if (equation_type == "A") { // Equation A
-        fnext[i] = 2 * (1 - beta2[i]) * fnow[i] + beta2[i] * (fnow[i+1] + fnow[i-1])- fpast[i];
-                 
-    }
-    else if (equation_type == "B") { // Equation B
-        fnext[i] = 2 * fnow[i] - fpast[i] + (beta2[i+1] * (fnow[i+1] - fnow[i])  -  beta2[i]   * (fnow[i]   - fnow[i-1]));
-        //fnext[i]= 0.25*(beta2[i+1]-beta2[i-1])*(fnow[i+1]-fnow[i-1]) + beta2[i]*(fnow[i+1]-2*fnow[i]+fnow[i-1]) +2*fnow[i]-fpast[i]; ou celle ci jsp???
-                 
-                
-    }
-    else if (equation_type == "C") { // Equation C
-        fnext[i] = 2 * fnow[i] - fpast[i] + (beta2[i+1] * fnow[i+1]   - 2 * beta2[i] * fnow[i]  + beta2[i-1] * fnow[i-1]);
-                 
-               
-                
-    }
+    if (equation_type == "A") {
+        // Equation A: Standard wave equation discretization
+        fnext[i] = 2.0 * (1.0 - beta2[i]) * fnow[i] 
+                - fpast[i] 
+                + beta2[i] * (fnow[i + 1] + fnow[i - 1]);
+    } 
+    else if (equation_type == "B") {
+        // Equation B: Correction for variable wave speed
+        fnext[i] = 2.0 * (1.0 - beta2[i]) * fnow[i] 
+                - fpast[i] 
+                + beta2[i] * (fnow[i + 1] + fnow[i - 1]) 
+                + 0.25 * (beta2[i] / vel2[i]) 
+                * (fnow[i + 1] - fnow[i - 1]) 
+                * (vel2[i + 1] - vel2[i - 1]);
+    } 
+    else if (equation_type == "C") {
+        // Equation C: Higher-order non-uniform grid correction
+        fnext[i] = fnow[i] * (2.0 - 4.0 * beta2[i] + beta2[i + 1] + beta2[i - 1]) 
+                - fpast[i] 
+                + 0.5 * (beta2[i + 1] - beta2[i - 1]) 
+                * (fnow[i + 1] - fnow[i - 1]) 
+                + beta2[i] * (fnow[i + 1] + fnow[i - 1]);
+    } 
     else {
-        cerr << "Type d'équation inconnu : " << equation_type << endl;
+        cerr << "Error: Invalid equation type. Choose 'A', 'B', or 'C'." << endl;
+        exit(1);
     }
-    }
-  */
-
-// Evolution : ABSOLUMENT PAS SURE JSP ATTENTION A TRAITER AVEC DES PINCETTES
-for(int i(1); i<N-1; ++i)
-{
-  fnext[i] = 0.0; // TODO : Schémas pour les 3 cas, Equation A ou B ou C
-  if(equation_type == "A") {
-    fnext[i] = 2*(1-beta2[i])*fnow[i] - fpast[i] + beta2[i]*(fnow[i+1]+ fnow[i-1]);
-}
-else if(equation_type == "B") {
-  fnext[i] = 2*(1-beta2[i])*fnow[i] - fpast[i] + beta2[i]*(fnow[i+1]+ fnow[i-1]) + 0.25*(beta2[i]/vel2[i])*(fnow[i+1]-fnow[i-1])*(vel2[i+1]-vel2[i-1]);
-    }
-else if(equation_type == "C") {
-  fnext[i] = fnow[i]*(2.0-4.0*beta2[i]+beta2[i+1]+beta2[i-1]) - fpast[i] + 0.5*(beta2[i+1]-beta2[i-1])*(fnow[i+1]-fnow[i-1])+beta2[i]*(fnow[i+1]+fnow[i-1]);}
-  else {
-    cerr << "Merci de choisir une equation valide" << endl;
-    exit(1);
   }
-}
-
-   
   
-  
-
     // Impose boundary conditions
     boundary_condition(fnext, fnow, A, om, t, dt, beta2, bc_l, bc_r, N);
-
+    if (t == 0) {  // Only for first timestep
+    std::ofstream debug("debug_first_step.txt");
+    debug << "x fnow fnext h0 vel2\n";  // Header
+    for (int i = 0; i < N; ++i) {
+        debug << x[i] << " " << fnow[i] << " " 
+              << fnext[i] << " " << h0[i] << " " 
+              << vel2[i] << "\n";
+      }
+    }
     // Mise a jour et préparer le pas suivant:
     fpast = fnow;
     fnow  = fnext;
   }
+
+  std::cout << "x.size(): " << x.size() << std::endl;  // Should equal nx+1
+  std::cout << "fnow.size(): " << fnow.size() << std::endl;  // Should equal nx+1
 
   if(ecrire_f) fichier_f << t << " " << fnow << endl;
   fichier_x << x << endl;
